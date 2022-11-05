@@ -23,36 +23,38 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef STACK_H
-#define STACK_H
+#include "SymbolTable.h"
 
-#include "IntrusiveLinkedList.h"
+void symtab_init(SymbolTable * symtab, HashCode hashCode)
+{
+    for (int i = 0; i < BUCKET_SIZE; i++)
+        islist_init(&symtab->list[i]);
+    symtab->hashCode = hashCode;
+}
 
-/**
- * Implementation of LIFO stack structure with circular intrusive singly
- * linked list.
- */
+int symtab_enter(SymbolTable * symtab, Symbol * symbol)
+{
+    int i = symtab_hash(symtab, symbol->name);
+    islist_insert_back(&symtab->list[i], &symbol->link);
+    return i;
+}
 
-typedef IntrusiveSListNode StackNode;
-typedef IntrusiveSListNode Stack;
+IntrusiveSListNode *symtab_find(SymbolTable * symtab, char *name)
+{
+    int i = symtab_hash(symtab, name);
+    islist_for_each(position, &(symtab->list[i])) {
+        Symbol *symbol = islist_entry_of_position(position, Symbol, link);
+        if (strcmp(symbol->name, name) == 0)
+            return position;
+    }
+    return NULL;
+}
 
-#define stack_init(s) slist_init(s)
-
-#define stack_push(s, node) slist_insert_back(s, node)
-
-#define stack_pop(s) slist_remove_back(s)
-
-#define stack_entry(ptr, type, member) slist_entry(ptr, type, member)
-
-#define stack_for_each(position, s) slist_for_each(position, s)
-
-#define stack_size(s) slist_size(s)
-
-#define stack_is_empty(s) ((s)->next == NULL)
-
-#define stack_top(s) ((s)->next)
-
-#define stack_destroy(s, type, member, destroy) \
-    slist_destroy(s, type, member, destroy)
-
-#endif /* STACK_H */
+Symbol *symtab_retrieve(SymbolTable * symtab, char *name)
+{
+    IntrusiveSListNode *position;
+    position = symtab_find(symtab, name);
+    if (position)
+        return islist_entry_of_position(position, Symbol, link);
+    return NULL;
+}

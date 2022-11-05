@@ -23,36 +23,39 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef QUEUE_H
-#define QUEUE_H
-
 #include "IntrusiveLinkedList.h"
 
-/**
- * Implementation of FIFO queue structure with circular intrusive doubly
- * linked list.
- */
+void idlist_insert_back(IntrusiveDListNode * position, IntrusiveDListNode * node)
+{
+    /* link node and position->next */
+    node->next = position->next;
+    position->next->prev = node;
 
-typedef IntrusiveDListNode QueueNode;
-typedef IntrusiveDListNode Queue;
+    /* linke position and node */
+    position->next = node;
+    node->prev = position;
+}
 
-#define queue_init(q) dlist_init(q)
+void idlist_remove_back(IntrusiveDListNode * position)
+{
+    if (!position->next)
+        return;
 
-#define queue_enqueue(q, node) dlist_insert_back((q)->prev, node)
+    IntrusiveDListNode *node = position->next;
+    position->next = node->next;
+    node->next->prev = position;
+}
 
-#define queue_dequeue(q) dlist_remove_back(q)
+void islist_insert_back(IntrusiveSListNode * position, IntrusiveSListNode * node)
+{
+    node->next = position->next;
+    position->next = node;
+}
 
-#define queue_entry(ptr, type, member) dlist_entry(ptr, type, member)
+void islist_remove_back(IntrusiveSListNode * position)
+{
+    if (!position->next)
+        return;
 
-#define queue_for_each(position, q) dlist_for_each(position, q)
-
-#define queue_size(q) dlist_size(q)
-
-#define queue_is_empty(q) ((q)->prev == (q) && (q)->next == (q))
-
-#define queue_front(q) ((q)->next)
-
-#define queue_destroy(head, type, member, destroy) \
-    dlist_destroy(head, type, member, destroy)
-
-#endif /* QUEUE_H */
+    position->next = position->next->next;
+}

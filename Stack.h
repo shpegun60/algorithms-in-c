@@ -23,39 +23,36 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef STACK_H
+#define STACK_H
+
 #include "IntrusiveLinkedList.h"
 
-void dlist_insert_back(IntrusiveDListNode * position, IntrusiveDListNode * node)
-{
-    /* link node and position->next */
-    node->next = position->next;
-    position->next->prev = node;
+/**
+ * Implementation of LIFO stack structure with circular intrusive singly
+ * linked list.
+ */
 
-    /* linke position and node */
-    position->next = node;
-    node->prev = position;
-}
+typedef IntrusiveSListNode StackNode;
+typedef IntrusiveSListNode Stack;
 
-void dlist_remove_back(IntrusiveDListNode * position)
-{
-    if (!position->next)
-        return;
+#define stack_init(s) islist_init(s)
 
-    IntrusiveDListNode *node = position->next;
-    position->next = node->next;
-    node->next->prev = position;
-}
+#define stack_push(s, node) islist_insert_back(s, node)
 
-void slist_insert_back(IntrusiveSListNode * position, IntrusiveSListNode * node)
-{
-    node->next = position->next;
-    position->next = node;
-}
+#define stack_pop(s) islist_remove_back(s)
 
-void slist_remove_back(IntrusiveSListNode * position)
-{
-    if (!position->next)
-        return;
+#define stack_entry(ptr, type, member) islist_entry(ptr, type, member)
 
-    position->next = position->next->next;
-}
+#define stack_for_each(position, s) islist_for_each(position, s)
+
+#define stack_size(s) islist_size(s)
+
+#define stack_is_empty(s) ((s)->next == NULL)
+
+#define stack_top(s) ((s)->next)
+
+#define stack_destroy(s, type, member, destroy) \
+    islist_destroy(s, type, member, destroy)
+
+#endif /* STACK_H */

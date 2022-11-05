@@ -23,38 +23,36 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "SymbolTable.h"
+#ifndef QUEUE_H
+#define QUEUE_H
 
-void symtab_init(SymbolTable * symtab, HashCode hashCode)
-{
-    for (int i = 0; i < BUCKET_SIZE; i++)
-        slist_init(&symtab->list[i]);
-    symtab->hashCode = hashCode;
-}
+#include "IntrusiveLinkedList.h"
 
-int symtab_enter(SymbolTable * symtab, Symbol * symbol)
-{
-    int i = symtab_hash(symtab, symbol->name);
-    slist_insert_back(&symtab->list[i], &symbol->link);
-    return i;
-}
+/**
+ * Implementation of FIFO queue structure with circular intrusive doubly
+ * linked list.
+ */
 
-IntrusiveSListNode *symtab_find(SymbolTable * symtab, char *name)
-{
-    int i = symtab_hash(symtab, name);
-    slist_for_each(position, &(symtab->list[i])) {
-        Symbol *symbol = slist_entry_of_position(position, Symbol, link);
-        if (strcmp(symbol->name, name) == 0)
-            return position;
-    }
-    return NULL;
-}
+typedef IntrusiveDListNode QueueNode;
+typedef IntrusiveDListNode Queue;
 
-Symbol *symtab_retrieve(SymbolTable * symtab, char *name)
-{
-    IntrusiveSListNode *position;
-    position = symtab_find(symtab, name);
-    if (position)
-        return slist_entry_of_position(position, Symbol, link);
-    return NULL;
-}
+#define queue_init(q) idlist_init(q)
+
+#define queue_enqueue(q, node) idlist_insert_back((q)->prev, node)
+
+#define queue_dequeue(q) idlist_remove_back(q)
+
+#define queue_entry(ptr, type, member) idlist_entry(ptr, type, member)
+
+#define queue_for_each(position, q) idlist_for_each(position, q)
+
+#define queue_size(q) idlist_size(q)
+
+#define queue_is_empty(q) ((q)->prev == (q) && (q)->next == (q))
+
+#define queue_front(q) ((q)->next)
+
+#define queue_destroy(head, type, member, destroy) \
+    idlist_destroy(head, type, member, destroy)
+
+#endif /* QUEUE_H */

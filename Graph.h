@@ -140,7 +140,7 @@ typedef struct _Graph {
     (graph_vertex_entry(graph, i)->vertstate == 1)
 
 /* convert intrusive singly linked list node to edge */
-#define graph_edge_entry(pe) slist_entry(pe, Edge, edgelink)
+#define graph_edge_entry(pe) islist_entry(pe, Edge, edgelink)
 
 /* convert intrusive singly linked list position to edge */
 #define graph_edge_entry_of_position(pe) graph_edge_entry((pe)->next)

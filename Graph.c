@@ -53,7 +53,7 @@ void graph_add_vertex(Graph * graph)
     vertexlist_resize(&graph->vertices, n + 1);
     graph_vertex_entry(graph, n)->id = n;
     graph_vertex_entry(graph, n)->vertstate = 0;
-    slist_init(&graph_vertex_entry(graph, n)->firstedge);
+    islist_init(&graph_vertex_entry(graph, n)->firstedge);
 }
 
 static inline void
@@ -69,7 +69,7 @@ _graph_add_unidirect_edge(Graph * graph, int i, int j, double weight)
     edge->weight = weight;
     edge->neighbor = j;
     edge->edgestate = 0;
-    slist_insert_back(&graph_vertex_entry(graph, i)->firstedge,
+    islist_insert_back(&graph_vertex_entry(graph, i)->firstedge,
                       &edge->edgelink);
 }
 
@@ -90,7 +90,7 @@ void graph_add_edge(Graph * graph, int i, int j, double weight)
 
 EdgeLink *graph_get_edge(Graph * graph, int i, int j)
 {
-    slist_for_each(position, &graph_vertex_entry(graph, i)->firstedge) {
+    islist_for_each(position, &graph_vertex_entry(graph, i)->firstedge) {
         if (graph_edge_entry_of_position(position)->neighbor == j) {
             return position;
         }
@@ -105,7 +105,7 @@ void graph_remove_edge(Graph * graph, int i, int j)
     position = graph_get_edge(graph, i, j);
     if (position) {
         EdgeLink *pe = position->next;
-        slist_remove_back(position);
+        islist_remove_back(position);
         free(graph_edge_entry(pe));
     }
 }
@@ -114,7 +114,7 @@ void graph_destroy(Graph * graph)
 {
     for (int i = 0; i < graph_vertex_size(graph); i++) {
         Vertex *pv = graph_vertex_entry(graph, i);
-        slist_destroy(&pv->firstedge, Edge, edgelink, free);
+        islist_destroy(&pv->firstedge, Edge, edgelink, free);
     }
     vertexlist_destroy(&graph->vertices);
 }
@@ -126,7 +126,7 @@ void graph_write(FILE * fp, Graph * graph)
     for (int i = 0; i < graph_vertex_size(graph); i++) {
         Vertex *vertex = graph_vertex_entry(graph, i);
         fprintf(fp, "v%-2d:", vertex->id);
-        slist_for_each(pe, &vertex->firstedge) {
+        islist_for_each(pe, &vertex->firstedge) {
             Vertex *neighbor = graph_vertex_entry(graph,
                                                   graph_edge_entry_of_position
                                                   (pe)->neighbor);
@@ -179,7 +179,7 @@ void graph_reset_vertices(Graph * graph)
 void graph_reset_edges(Graph * graph)
 {
     for (int i = 0; i < graph_vertex_size(graph); i++) {
-        slist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
+        islist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
             graph_edge_entry_of_position(pe)->edgestate = 0;
         }
     }
@@ -194,7 +194,7 @@ void graph_depth_first_order(Graph * graph, int i, IntegerSequence * preorder,
     graph_mark_vertex(graph, i);
     if (preorder)
         sequence_push_back(preorder, i);
-    slist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
+    islist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
         Edge *edge = graph_edge_entry_of_position(pe);
 
         if (graph_vertex_is_unmarked(graph, edge->neighbor))
@@ -215,7 +215,7 @@ void graph_depth_first_search(Graph * graph, int i, IntegerSequence * s)
 static void _graph_depth_first_path(Graph * graph, int i, EdgeListGraph * path)
 {
     graph_mark_vertex(graph, i);
-    slist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
+    islist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
         Edge *edge = graph_edge_entry_of_position(pe);
 
         if (graph_vertex_is_unmarked(graph, edge->neighbor)) {
@@ -249,7 +249,7 @@ void graph_breadth_first_search(Graph * graph, int i, IntegerSequence * s)
         sequence_push_back(s, i);
         sequence_pop_front(&queue);
 
-        slist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
+        islist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
             Edge *edge = graph_edge_entry_of_position(pe);
             if (graph_vertex_is_unmarked(graph, edge->neighbor)) {
                 sequence_push_back(&queue, edge->neighbor);
@@ -278,7 +278,7 @@ void graph_breadth_first_path(Graph * graph, int i, EdgeListGraph * path)
         sequence_get_front(&queue, &i);
         sequence_pop_front(&queue);
 
-        slist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
+        islist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
             Edge *edge = graph_edge_entry_of_position(pe);
             if (graph_vertex_is_unmarked(graph, edge->neighbor)) {
                 egraph_edge_entry(path, edge->neighbor).start = i;
@@ -321,7 +321,7 @@ int graph_connected_components(Graph * graph, IntegerSequence * s)
 static int _graph_topological_sort(Graph * graph, int i, IntegerSequence * s)
 {
     graph_mark_vertex_grey(graph, i);
-    slist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
+    islist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
         Edge *edge = graph_edge_entry_of_position(pe);
 
         if (graph_vertex_is_unmarked(graph, edge->neighbor))
@@ -356,7 +356,7 @@ void graph_reverse(Graph * src, Graph * dest)
         graph_add_vertex(dest);
     }
     for (int i = 0; i < n; i++) {
-        slist_for_each(pe, &graph_vertex_entry(src, i)->firstedge) {
+        islist_for_each(pe, &graph_vertex_entry(src, i)->firstedge) {
             Edge *edge = graph_edge_entry_of_position(pe);
             graph_add_edge(dest, edge->neighbor, i, edge->weight);
         }
@@ -464,7 +464,7 @@ void _graph_tarjan_scc(Graph * graph, int i, TarjanInfo * info,
     graph_mark_vertex_grey(graph, i);
     sequence_push_back(&info->stack, i);
 
-    slist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
+    islist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
         Edge *edge = graph_edge_entry_of_position(pe);
         int j = edge->neighbor;
 
@@ -548,7 +548,7 @@ void graph_prim_linear_search(Graph * graph, EdgeListGraph * path)
     for (int i = 0; i < n - 1; i++) {
         Vertex *vstart = graph_vertex_entry(graph, start);
         /* update distances */
-        slist_for_each(pe, &vstart->firstedge) {
+        islist_for_each(pe, &vstart->firstedge) {
             Edge *edge = graph_edge_entry_of_position(pe);
             Vertex *u = graph_vertex_entry(graph, edge->neighbor);
             if (graph_vertex_is_unmarked(graph, edge->neighbor))
@@ -599,7 +599,7 @@ void graph_prim_priority_queue(Graph * graph, EdgeListGraph * path)
         printf("visiting %d:\n", start);
         Vertex *vstart = graph_vertex_entry(graph, start);
         /* update distances */
-        slist_for_each(pe, &vstart->firstedge) {
+        islist_for_each(pe, &vstart->firstedge) {
             Edge *edge = graph_edge_entry_of_position(pe);
             if (graph_vertex_is_marked(graph, edge->neighbor))
                 continue;
@@ -665,7 +665,7 @@ graph_dijkstra_linear_search(Graph * graph, int source, EdgeListGraph * path)
     for (int i = 0; i < n - 1; i++) {
         Vertex *vstart = graph_vertex_entry(graph, start);
         /* update distances */
-        slist_for_each(pe, &vstart->firstedge) {
+        islist_for_each(pe, &vstart->firstedge) {
             Edge *edge = graph_edge_entry_of_position(pe);
             _graph_relax(path, start, edge->neighbor, edge->weight);
         }
@@ -713,7 +713,7 @@ graph_dijkstra_priority_queue(Graph * graph, int source, EdgeListGraph * path)
         start = heap_pop(&heap);
         Vertex *vstart = graph_vertex_entry(graph, start);
         /* update distances */
-        slist_for_each(pe, &vstart->firstedge) {
+        islist_for_each(pe, &vstart->firstedge) {
             Edge *edge = graph_edge_entry_of_position(pe);
             if (_graph_relax(path, start, edge->neighbor, edge->weight)) {
                 heap_update(&heap, edge->neighbor);
@@ -791,7 +791,7 @@ int graph_bellman_ford(Graph * graph, int source, EdgeListGraph * path)
         /* reset the vertex state */
         graph_unmark_vertex(graph, start);
 
-        slist_for_each(pe, &graph_vertex_entry(graph, start)->firstedge) {
+        islist_for_each(pe, &graph_vertex_entry(graph, start)->firstedge) {
             Edge *edge = graph_edge_entry_of_position(pe);
             if (_graph_relax(path, start, edge->neighbor, edge->weight)) {
                 /* mark it so as to be processed in next pass */
@@ -840,7 +840,7 @@ void graph_create(EdgeListGraph * src, Graph * dest)
 void _graph_negate(Graph * graph)
 {
     for (int i = 0; i < graph_vertex_size(graph); i++) {
-        slist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
+        islist_for_each(pe, &graph_vertex_entry(graph, i)->firstedge) {
             graph_edge_entry_of_position(pe)->weight *= -1;
         }
     }
